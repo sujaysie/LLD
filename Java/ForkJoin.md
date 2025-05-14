@@ -137,4 +137,148 @@ For further reading, check out:
 - Baeldung’s Guide to Fork/Join:[](https://www.baeldung.com/java-fork-join)
 - Example code on GitHub:[](https://github.com/albertattard/java-fork-join-example/blob/master/README.md)
 
-If you have a specific use case or need help with a particular implementation, let me know!
+# Merge Sort with Fork/Join Framework
+
+Here's an implementation of merge sort using Java's Fork/Join framework. This approach leverages parallel processing to sort large arrays more efficiently by dividing the sorting task into smaller subtasks that can be executed concurrently.
+
+```java
+import java.util.Arrays;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
+
+public class ParallelMergeSort {
+    // Threshold for switching to sequential sort
+    private static final int THRESHOLD = 1000;
+
+    public static void main(String[] args) {
+        // Create a sample array
+        int[] array = createRandomArray(10000000);
+        
+        // Clone the array for verification
+        int[] verifyArray = array.clone();
+        
+        // Use ForkJoinPool to execute the parallel merge sort
+        ForkJoinPool pool = ForkJoinPool.commonPool();
+        
+        // Measure execution time
+        long startTime = System.currentTimeMillis();
+        pool.invoke(new MergeSortTask(array, 0, array.length - 1));
+        long endTime = System.currentTimeMillis();
+        
+        // Verify the result
+        Arrays.sort(verifyArray);
+        boolean isSorted = Arrays.equals(array, verifyArray);
+        
+        System.out.println("Array size: " + array.length);
+        System.out.println("Is correctly sorted: " + isSorted);
+        System.out.println("Execution time: " + (endTime - startTime) + " ms");
+        System.out.println("Number of processors: " + Runtime.getRuntime().availableProcessors());
+    }
+    
+    // Create a random array of specified size
+    private static int[] createRandomArray(int size) {
+        int[] array = new int[size];
+        for (int i = 0; i < size; i++) {
+            array[i] = (int)(Math.random() * size);
+        }
+        return array;
+    }
+    
+    // MergeSortTask class that extends RecursiveAction
+    static class MergeSortTask extends RecursiveAction {
+        private final int[] array;
+        private final int start;
+        private final int end;
+        
+        public MergeSortTask(int[] array, int start, int end) {
+            this.array = array;
+            this.start = start;
+            this.end = end;
+        }
+        
+        @Override
+        protected void compute() {
+            // If the array segment is small enough, use sequential sort
+            if (end - start <= THRESHOLD) {
+                sequentialSort(array, start, end);
+                return;
+            }
+            
+            // Otherwise, divide the array and sort recursively
+            int mid = start + (end - start) / 2;
+            
+            // Create subtasks for the left and right halves
+            MergeSortTask leftTask = new MergeSortTask(array, start, mid);
+            MergeSortTask rightTask = new MergeSortTask(array, mid + 1, end);
+            
+            // Fork both tasks
+            invokeAll(leftTask, rightTask);
+            
+            // Merge the sorted halves
+            merge(array, start, mid, end);
+        }
+        
+        // Sequential merge sort for small arrays
+        private void sequentialSort(int[] array, int start, int end) {
+            if (start < end) {
+                int mid = start + (end - start) / 2;
+                sequentialSort(array, start, mid);
+                sequentialSort(array, mid + 1, end);
+                merge(array, start, mid, end);
+            }
+        }
+        
+        // Merge two sorted subarrays
+        private void merge(int[] array, int start, int mid, int end) {
+            // Create temporary arrays
+            int[] leftArray = Arrays.copyOfRange(array, start, mid + 1);
+            int[] rightArray = Arrays.copyOfRange(array, mid + 1, end + 1);
+            
+            // Merge the temporary arrays
+            int i = 0, j = 0, k = start;
+            
+            while (i < leftArray.length && j < rightArray.length) {
+                if (leftArray[i] <= rightArray[j]) {
+                    array[k++] = leftArray[i++];
+                } else {
+                    array[k++] = rightArray[j++];
+                }
+            }
+            
+            // Copy remaining elements
+            while (i < leftArray.length) {
+                array[k++] = leftArray[i++];
+            }
+            
+            while (j < rightArray.length) {
+                array[k++] = rightArray[j++];
+            }
+        }
+    }
+}
+```
+
+## Key aspects of this implementation:
+
+1. **RecursiveAction**: We use `RecursiveAction` since our merge sort doesn't need to return a value (it sorts the array in place).
+
+2. **Threshold-Based Decision**: 
+   - For large subarrays, we divide the work using the Fork/Join framework
+   - For small subarrays (below the threshold), we use sequential sorting for efficiency
+
+3. **Task Division**:
+   - We split the array in half
+   - Create separate tasks for each half
+   - Use `invokeAll()` to execute both tasks in parallel
+
+4. **Merging Process**:
+   - After both subtasks complete, we merge the sorted halves
+   - The merge operation combines the results into a single sorted array
+
+5. **Performance Considerations**:
+   - The `THRESHOLD` value (1000 in this example) is important - too small creates excessive task overhead, too large limits parallelism
+   - Performance gains are most noticeable on multi-core systems with large arrays
+
+The parallelized merge sort significantly outperforms sequential merge sort on large datasets when running on multi-core processors. The Fork/Join framework efficiently distributes the workload across available CPU cores, maximizing throughput.
+
+Would you like me to explain any specific part of this implementation in more detail?

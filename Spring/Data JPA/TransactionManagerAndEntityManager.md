@@ -19,7 +19,7 @@ The TransactionManager (usually implemented as JpaTransactionManager in Spring) 
 │        │             │              │            │      │
 │        ▼             ▼              ▼            ▼      │
 │  ┌──────────┐   ┌───────────┐   ┌────────┐   ┌───────┐  │
-│  │Acquire   │   │Transaction │   │Write to│   │Release│  │
+│  │Acquire   │   │Transaction │  │Write to│   │Release│  │
 │  │Connection│   │Management │   │Database│   │Resrcs │  │
 │  └──────────┘   └───────────┘   └────────┘   └───────┘  │
 │                                                         │

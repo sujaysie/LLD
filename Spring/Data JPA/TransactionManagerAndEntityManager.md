@@ -112,8 +112,8 @@ The heart of EntityManager is the persistence context - an in-memory cache of ma
 │                                                         │
 │  ┌────────────────────────────────────────────────────┐ │
 │  │                Entity Change Tracker               │ │
-│  │ Entity #1: [name: null → "New Name"]              │ │
-│  │ Entity #2: [price: 10.0 → 15.0]                   │ │
+│  │ Entity #1: [name: null → "New Name"]               │ │
+│  │ Entity #2: [price: 10.0 → 15.0]                    │ │
 │  └────────────────────────────────────────────────────┘ │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
